@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>校本教師帶隊統計及記錄系統</title>
+  <style>
+    :root {
+      --primary: #1e40af;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --border: #cbd5e1;
+      --danger-bg: #fee2e2;
+      --danger-text: #991b1b;
+      --warning-bg: #fef3c7;
+      --warning-text: #92400e;
+      --success: #16a34a;
+      --success-hover: #15803d;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 24px;
+      line-height: 1.5;
+    }
+    .container { max-width: 1240px; margin: 0 auto; }
+
+    /* 頂部標題與工具列 */
+    header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--border);
+      padding-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    h1 { font-size: 1.6rem; color: var(--primary); font-weight: 700; }
+    .subtitle { font-size: 0.88rem; color: #64748b; margin-top: 4px; }
+    .action-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* 頁籤選單 */
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .tab-btn {
+      padding: 10px 20px;
+      border: 1px solid var(--border);
+      background: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 2px 4px rgba(30,64,175,0.2);
+    }
+
+    /* 卡片與表單佈局 */
+    .card {
+      background: var(--card);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .card-title { font-size: 1.2rem; margin-bottom: 16px; font-weight: 700; color: #1e293b; }
+
+    .grid-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.88rem; font-weight: 600; color: #334155; }
+    input, select, textarea {
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.95rem;
+      background: #fff;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30,64,175,0.15);
+    }
+
+    /* 按鈕樣式 */
+    .btn {
+      padding: 9px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.92rem;
+      transition: background 0.2s;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-success:hover { background: var(--success-hover); }
+    .btn-outline { background: #fff; border: 1px solid var(--border); color: var(--text); }
+    .btn-outline:hover { background: #f1f5f9; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-danger:hover { background: #b91c1c; }
+
+    /* 表格樣式 */
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; margin-top: 8px; }
+    th, td { padding: 11px 12px; border-bottom: 1px solid var(--border); }
+    th { background: #f1f5f9; font-weight: 700; color: #334155; position: sticky; top: 0; }
+    tr:hover { background: #f8fafc; }
+
+    /* 徽章與警示標籤 */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 0.78rem; font-weight: 600; }
+    .badge-lead { background: #dbeafe; color: #1e40af; }
+    .badge-assist { background: #e0e7ff; color: #3730a3; }
+    .alert-high-hours { background-color: var(--danger-bg) !important; color: var(--danger-text); font-weight: bold; }
+    .alert-weekend { background-color: var(--warning-bg) !important; color: var(--warning-text); font-weight: bold; }
+
+    /* 頂部指標卡 */
+    .stat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; padding: 18px; border-radius: 8px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .stat-title { font-size: 0.85rem; color: #64748b; font-weight: 600; }
+    .stat-val { font-size: 1.85rem; font-weight: bold; color: var(--primary); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div>
+      <h1>校本教師帶隊統計及記錄系統</h1>
+      <div class="subtitle">自動化登記 ｜ 時數折算 ｜ 隨行名單自動拆分 ｜ 管理層工時負荷預警</div>
+    </div>
+    <div class="action-group">
+      <button class="btn btn-success" onclick="exportToCSV()">📥 匯出 Excel (CSV)</button>
+      <button class="btn btn-outline" onclick="loadSampleData()">示範數據</button>
+      <button class="btn btn-danger" onclick="clearAllData()">清空重設</button>
+    </div>
+  </header>
+
+  <!-- 導航分頁 -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" id="tabBtnForm" onclick="switchTab('formTab', this)">📝 活動申報登記</button>
+    <button class="tab-btn" id="tabBtnSummary" onclick="switchTab('summaryTab', this)">📊 教師工作量統計（管理層視圖）</button>
+    <button class="tab-btn" id="tabBtnLog" onclick="switchTab('logTab', this)">📋 帶隊原始明細庫</button>
+  </div>
+
+  <!-- 分頁一：填寫申報表單 -->
+  <div id="formTab" class="card">
+    <h2 class="card-title">新增外出帶隊記錄</h2>
+    <form id="recordForm" onsubmit="handleFormSubmit(event)">
+      <div class="grid-form">
+        <div class="form-group">
+          <label for="mainTeacher">主要領隊老師 *</label>
+          <select id="mainTeacher" required>
+            <option value="">-- 請選擇教師 --</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="eventName">活動 / 比賽名稱 *</label>
+          <input type="text" id="eventName" placeholder="例：全港小學校際 STEAM 大賽" required>
+        </div>
+
+        <div class="form-group">
+          <label for="department">負責 / 主辦科組 *</label>
+          <select id="department" required>
+            <option value="體育組">體育組</option>
+            <option value="音樂組">音樂組</option>
+            <option value="課外活動組">課外活動組</option>
+            <option value="STEAM/常識組">STEAM/常識組</option>
+            <option value="輔導組">輔導組</option>
+            <option value="德育組">德育組</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="eventDate">活動日期 *</label>
+          <input type="date" id="eventDate" required>
+        </div>
+
+        <div class="form-group">
+          <label for="timeType">時段屬性 *</label>
+          <select id="timeType" required>
+            <option value="平日上課時間內">平日上課時間內</option>
+            <option value="平日放學後">平日放學後</option>
+            <option value="星期六">星期六</option>
+            <option value="星期日/公眾假期">星期日/公眾假期</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="startTime">出發時間 *</label>
+          <input type="time" id="startTime" value="08:30" required>
+        </div>
+
+        <div class="form-group">
+          <label for="endTime">解散時間 *</label>
+          <input type="time" id="endTime" value="16:30" required>
+        </div>
+
+        <div class="form-group">
+          <label for="needsSub">需否安排代課 *</label>
+          <select id="needsSub" required>
+            <option value="否">否</option>
+            <option value="是">是</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="accompanyTeachers">隨行 / 協同教師（多位同工請以逗號隔開）</label>
+        <input type="text" id="accompanyTeachers" placeholder="例：陳大文, 張美麗, 李志明">
+      </div>
+
+      <div class="form-group" style="margin-top: 16px;">
+        <label for="remarks">備註 / 突發情況記錄</label>
+        <textarea id="remarks" rows="2" placeholder="如賽程延遲、往返校車安排等"></textarea>
+      </div>
+
+      <div style="margin-top: 22px; text-align: right;">
+        <button type="submit" class="btn btn-primary">確認提交帶隊記錄</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 分頁二：教師工時匯總表 (管理層視圖) -->
+  <div id="summaryTab" style="display: none;">
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="stat-title">全校累計帶隊次數</div>
+        <div class="stat-val" id="statTotalTrips">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">全校累計帶隊總時數</div>
+        <div class="stat-val" id="statTotalHours">0.0 hrs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">假日帶隊人次</div>
+        <div class="stat-val" id="statWeekendTrips">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">時數超載教師 (>30h)</div>
+        <div class="stat-val" id="statOverloadTeachers" style="color: #dc2626;">0</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+        <h2 class="card-title" style="margin-bottom:0;">教師個人帶隊工作量統計表</h2>
+        <span style="font-size:0.82rem; color:#64748b;">
+          預警標記：🔴 總時數 > 30 小時（工作量超額） ｜ 🟡 假日帶隊 ≥ 3 次（補假提醒）
+        </span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table id="summaryTable">
+          <thead>
+            <tr>
+              <th>教師姓名</th>
+              <th>主領隊次數</th>
+              <th>隨行次數</th>
+              <th>總帶隊次數</th>
+              <th>假日帶隊次數</th>
+              <th>需代課次數</th>
+              <th>累計總時數 (小時)</th>
+              <th>行政狀態評估</th>
+            </tr>
+          </thead>
+          <tbody id="summaryTableBody">
+            <!-- 動態生成 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分頁三：明細庫 -->
+  <div id="logTab" style="display: none;" class="card">
+    <h2 class="card-title">活動原始申報清單</h2>
+    <div style="overflow-x: auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>學年學期</th>
+            <th>活動名稱</th>
+            <th>主辦科組</th>
+            <th>時段性質</th>
+            <th>主領隊</th>
+            <th>隨行教師</th>
+            <th>時數</th>
+            <th>需代課</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="rawTableBody">
+          <!-- 動態生成 -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 1. 預設教師名單 (可依校本需求增刪)
+  const DEFAULT_TEACHERS = [
+    "嚴副校長", "陳大文", "張美麗", "李小明", "黃天佑", "何麗儀", "周德威", "梁慧賢"
+  ];
+
+  // 2. 本地資料儲存載入
+  let records = JSON.parse(localStorage.getItem("escort_records")) || [];
+
+  window.onload = function() {
+    initTeacherDropdown();
+    renderTables();
+  };
+
+  function initTeacherDropdown() {
+    const select = document.getElementById("mainTeacher");
+    select.innerHTML = '<option value="">-- 請選擇教師 --</option>';
+    DEFAULT_TEACHERS.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      select.appendChild(opt);
+    });
+  }
+
+  // 3. 時數與學年度判定函式
+  function calculateHours(start, end) {
+    const s = start.split(":");
+    const e = end.split(":");
+    const startMin = parseInt(s[0], 10) * 60 + parseInt(s[1], 10);
+    const endMin = parseInt(e[0], 10) * 60 + parseInt(e[1], 10);
+    let diff = (endMin - startMin) / 60;
+    return diff > 0 ? parseFloat(diff.toFixed(1)) : 0;
+  }
+
+  function getAcademicTerm(dateStr) {
+    const d = new Date(dateStr);
+    const m = d.getMonth() + 1;
+    const y = d.getFullYear();
+    return m >= 9 ? `${y}-${y + 1} 上學期` : `${y - 1}-${y} 下學期`;
+  }
+
+  // 4. 表單登記提交
+  function handleFormSubmit(e) {
+    e.preventDefault();
+    const eventDate = document.getElementById("eventDate").value;
+    const startTime = document.getElementById("startTime").value;
+    const endTime = document.getElementById("endTime").value;
+    const hours = calculateHours(startTime, endTime);
+
+    const newRecord = {
+      id: Date.now(),
+      mainTeacher: document.getElementById("mainTeacher").value,
+      eventName: document.getElementById("eventName").value,
+      department: document.getElementById("department").value,
+      eventDate: eventDate,
+      academicTerm: getAcademicTerm(eventDate),
+      timeType: document.getElementById("timeType").value,
+      isHoliday: (document.getElementById("timeType").value === "星期六" || document.getElementById("timeType").value === "星期日/公眾假期"),
+      startTime: startTime,
+      endTime: endTime,
+      hours: hours,
+      needsSub: document.getElementById("needsSub").value,
+      accompanyTeachers: document.getElementById("accompanyTeachers").value.trim(),
+      remarks: document.getElementById("remarks").value.trim()
+    };
+
+    records.unshift(newRecord);
+    saveData();
+    renderTables();
+    alert("申報登記成功！");
+    document.getElementById("recordForm").reset();
+    document.getElementById("startTime").value = "08:30";
+    document.getElementById("endTime").value = "16:30";
+    switchTab("summaryTab", document.getElementById("tabBtnSummary"));
+  }
+
+  function saveData() {
+    localStorage.setItem("escort_records", JSON.stringify(records));
+  }
+
+  // 5. 渲染明細庫與工作量匯總（包含隨行名單拆分演算法）
+  function renderTables() {
+    renderRawTable();
+    renderSummaryTable();
+  }
+
+  function renderRawTable() {
+    const tbody = document.getElementById("rawTableBody");
+    tbody.innerHTML = "";
+    if (records.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#94a3b8; padding:24px;">暫無帶隊記錄</td></tr>`;
+      return;
+    }
+
+    records.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.eventDate}</td>
+        <td>${r.academicTerm}</td>
+        <td><strong>${r.eventName}</strong></td>
+        <td>${r.department}</td>
+        <td>${r.timeType}</td>
+        <td><span class="badge badge-lead">${r.mainTeacher}</span></td>
+        <td>${r.accompanyTeachers || "-"}</td>
+        <td>${r.hours} 小時</td>
+        <td>${r.needsSub === "是" ? '<span style="color:#dc2626;font-weight:bold;">是</span>' : '否'}</td>
+        <td><button style="color:#dc2626;border:none;background:none;cursor:pointer;font-weight:600;" onclick="deleteRecord(${r.id})">刪除</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderSummaryTable() {
+    const teacherStats = {};
+    DEFAULT_TEACHERS.forEach(t => {
+      teacherStats[t] = {
+        name: t,
+        leadCount: 0,
+        assistCount: 0,
+        weekendCount: 0,
+        subCount: 0,
+        totalHours: 0
+      };
+    });
+
+    let totalTrips = records.length;
+    let totalSchoolHours = 0;
+    let weekendTrips = 0;
+
+    // 核心拆分演算法：遍歷每筆活動
+    records.forEach(r => {
+      totalSchoolHours += r.hours;
+      if (r.isHoliday) weekendTrips++;
+
+      // 主領隊計入
+      if (!teacherStats[r.mainTeacher]) {
+        teacherStats[r.mainTeacher] = { name: r.mainTeacher, leadCount: 0, assistCount: 0, weekendCount: 0, subCount: 0, totalHours: 0 };
+      }
+      teacherStats[r.mainTeacher].leadCount++;
+      teacherStats[r.mainTeacher].totalHours += r.hours;
+      if (r.isHoliday) teacherStats[r.mainTeacher].weekendCount++;
+      if (r.needsSub === "是") teacherStats[r.mainTeacher].subCount++;
+
+      // 隨行名單拆分並累計
+      if (r.accompanyTeachers) {
+        const cleaned = r.accompanyTeachers.replace(/，/g, ",");
+        const list = cleaned.split(",").map(i => i.trim()).filter(Boolean);
+        list.forEach(assist => {
+          if (!teacherStats[assist]) {
+            teacherStats[assist] = { name: assist, leadCount: 0, assistCount: 0, weekendCount: 0, subCount: 0, totalHours: 0 };
+          }
+          teacherStats[assist].assistCount++;
+          teacherStats[assist].totalHours += r.hours;
+          if (r.isHoliday) teacherStats[assist].weekendCount++;
+        });
+      }
+    });
+
+    const tbody = document.getElementById("summaryTableBody");
+    tbody.innerHTML = "";
+    let overloadCount = 0;
+
+    Object.values(teacherStats).forEach(s => {
+      const totalCount = s.leadCount + s.assistCount;
+      const isOverload = s.totalHours > 30;
+      const isWeekendAlert = s.weekendCount >= 3;
+      if (isOverload) overloadCount++;
+
+      let statusDesc = '<span style="color:#16a34a;font-weight:600;">良好</span>';
+      if (isOverload && isWeekendAlert) statusDesc = '<span style="color:#dc2626;font-weight:bold;">⚠️ 時數超載且多假日帶隊</span>';
+      else if (isOverload) statusDesc = '<span style="color:#dc2626;font-weight:bold;">🔴 時數超額 (建議減負)</span>';
+      else if (isWeekendAlert) statusDesc = '<span style="color:#d97706;font-weight:bold;">🟡 需安排補休</span>';
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${s.name}</strong></td>
+        <td>${s.leadCount}</td>
+        <td>${s.assistCount}</td>
+        <td><strong>${totalCount}</strong></td>
+        <td class="${isWeekendAlert ? 'alert-weekend' : ''}">${s.weekendCount}</td>
+        <td>${s.subCount}</td>
+        <td class="${isOverload ? 'alert-high-hours' : ''}">${s.totalHours.toFixed(1)}</td>
+        <td>${statusDesc}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("statTotalTrips").textContent = totalTrips;
+    document.getElementById("statTotalHours").textContent = `${totalSchoolHours.toFixed(1)} hrs`;
+    document.getElementById("statWeekendTrips").textContent = weekendTrips;
+    document.getElementById("statOverloadTeachers").textContent = overloadCount;
+  }
+
+  function deleteRecord(id) {
+    if (confirm("確定要刪除這筆帶隊記錄嗎？")) {
+      records = records.filter(r => r.id !== id);
+      saveData();
+      renderTables();
+    }
+  }
+
+  // 6. 分頁切換
+  function switchTab(tabId, btnElement) {
+    document.getElementById("formTab").style.display = "none";
+    document.getElementById("summaryTab").style.display = "none";
+    document.getElementById("logTab").style.display = "none";
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+
+    document.getElementById(tabId).style.display = "block";
+    if (btnElement) btnElement.classList.add("active");
+  }
+
+  // 7. 匯出 Excel (CSV 含 UTF-8 BOM 防亂碼)
+  function exportToCSV() {
+    if (records.length === 0) {
+      alert("目前尚無資料可供匯出！");
+      return;
+    }
+
+    let csvContent = "\uFEFF";
+    csvContent += "活動日期,學年學期,活動名稱,主辦科組,時段性質,主要領隊,隨行教師,帶隊時數,需安排代課,備註\n";
+
+    records.forEach(r => {
+      const row = [
+        r.eventDate,
+        r.academicTerm,
+        `"${r.eventName.replace(/"/g, '""')}"`,
+        r.department,
+        r.timeType,
+        r.mainTeacher,
+        `"${(r.accompanyTeachers || '').replace(/"/g, '""')}"`,
+        r.hours,
+        r.needsSub,
+        `"${(r.remarks || '').replace(/"/g, '""')}"`
+      ];
+      csvContent += row.join(",") + "\n";
+    });
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `教師帶隊記錄_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  // 8. 示範數據載入與清空
+  function loadSampleData() {
+    records = [
+      { id: 1, mainTeacher: "嚴副校長", eventName: "香港小學校際 STEAM 創意大賽", department: "STEAM/常識組", eventDate: "2026-10-18", academicTerm: "2026-2027 上學期", timeType: "星期六", isHoliday: true, startTime: "08:30", endTime: "16:30", hours: 8.0, needsSub: "否", accompanyTeachers: "陳大文, 張美麗", remarks: "全港總決賽獲得一等獎" },
+      { id: 2, mainTeacher: "黃天佑", eventName: "學界田徑錦標賽初賽", department: "體育組", eventDate: "2026-10-24", academicTerm: "2026-2027 上學期", timeType: "平日上課時間內", isHoliday: false, startTime: "08:00", endTime: "17:00", hours: 9.0, needsSub: "是", accompanyTeachers: "李小明", remarks: "需要整天全科代課" },
+      { id: 3, mainTeacher: "陳大文", eventName: "小六參觀太空館及科學館", department: "課外活動組", eventDate: "2026-11-05", academicTerm: "2026-2027 上學期", timeType: "平日放學後", isHoliday: false, startTime: "14:00", endTime: "18:00", hours: 4.0, needsSub: "否", accompanyTeachers: "何麗儀", remarks: "交通順暢準時解散" }
+    ];
+    saveData();
+    renderTables();
+    alert("已成功載入示範數據！請點選「教師工作量統計」分頁查看即時運算結果。");
+  }
+
+  function clearAllData() {
+    if (confirm("確定要清空所有已登記的帶隊資料嗎？此操作無法還原。")) {
+      records = [];
+      saveData();
+      renderTables();
+    }
+  }
+</script>
+
+</body>
+</html>
